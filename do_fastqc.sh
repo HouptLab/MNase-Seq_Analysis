@@ -14,7 +14,7 @@ fi
 
 SRCDIR="$1"
 
-OUTDIR="${2:-fastqc_raw}" 
+OUTDIR="${2:-fastqc}" 
 
 # Check directory exists
 if [[ ! -d "$SRCDIR" ]]; then
@@ -30,7 +30,7 @@ mkdir -p "$OUTDIR"
 
 
 
-LOG="$OUTDIR/fastqc_raw.log"
+LOG="$OUTDIR/fastqc.log"
 
 echo "$LOG"
 

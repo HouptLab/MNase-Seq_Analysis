@@ -69,19 +69,32 @@ adapter files are in ```Trimmomatic-0.40/adapters```, and Trimmomatic looks ther
 Query: which are appropriate adapters? NEBNext_PE from the library kit?
 
 
-NB: add trailing ```&``` o run in background.
-
 ```
 
-./do_trimming.sh ./sequences/Thomas_Houpt_05-29-2026_Houpt_SN_Medulla/Houpt_SN_Medulla &
+./trim_pe.zsh ./sequences/Thomas_Houpt_05-29-2026_Houpt_SN_Medulla/Houpt_SN_Medulla
 
 ```
 
 You can monitor progress with ```tail -f trimming_B.log```.
 
+**put the original sequencing files in ```/raw```, and the paired/unpaired files in ```/trimmed```
+
+## Check quality of trimmed with fastqc 
+
+### Macos
+
+```
+./do_fastqc.sh ./do_fastqc.sh ./sequences/Thomas_Houpt_05-29-2026_Houpt_SN_Medulla/Houpt_SN_Medulla/trimmed ./fastqc_trimmed
+
+
+```
+
 ## Align with bowtie2
 
 [bowtie2](https://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
+
+
+### Macos
 
 install ```brew install bowtie2```
 

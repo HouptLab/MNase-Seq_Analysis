@@ -1,0 +1,102 @@
+[2026-06-11 12:20:18] Running 4 parallel jobs, 3 threads each (of 12 total cores)
+[2026-06-11 12:20:18] Running 4 parallel jobs, 3 threads each (of 12 total cores)
+application/gzip
+application/gzip
+application/gzip
+application/gzip
+Started analysis of SN_Medulla_10U_S108_L008_R2_paired_001.fastq.gz
+Started analysis of SN_Medulla_10U_S108_L008_R1_paired_001.fastq.gz
+Started analysis of SN_Medulla_10U_S108_L008_R1_unpaired_001.fastq.gz
+Approx 5% complete for SN_Medulla_10U_S108_L008_R1_unpaired_001.fastq.gz
+Approx 10% complete for SN_Medulla_10U_S108_L008_R1_unpaired_001.fastq.gz
+Approx 15% complete for SN_Medulla_10U_S108_L008_R1_unpaired_001.fastq.gz
+Approx 20% complete for SN_Medulla_10U_S108_L008_R1_unpaired_001.fastq.gz
+Started analysis of SN_Medulla_10U_S108_L008_R2_unpaired_001.fastq.gz
+Approx 25% complete for SN_Medulla_10U_S108_L008_R1_unpaired_001.fastq.gz
+Approx 5% complete for SN_Medulla_10U_S108_L008_R2_unpaired_001.fastq.gz
+Approx 30% complete for SN_Medulla_10U_S108_L008_R1_unpaired_001.fastq.gz
+Approx 10% complete for SN_Medulla_10U_S108_L008_R2_unpaired_001.fastq.gz
+Approx 35% complete for SN_Medulla_10U_S108_L008_R1_unpaired_001.fastq.gz
+Approx 15% complete for SN_Medulla_10U_S108_L008_R2_unpaired_001.fastq.gz
+Approx 40% complete for SN_Medulla_10U_S108_L008_R1_unpaired_001.fastq.gz
+Approx 20% complete for SN_Medulla_10U_S108_L008_R2_unpaired_001.fastq.gz
+Approx 45% complete for SN_Medulla_10U_S108_L008_R1_unpaired_001.fastq.gz
+Approx 25% complete for SN_Medulla_10U_S108_L008_R2_unpaired_001.fastq.gz
+Approx 50% complete for SN_Medulla_10U_S108_L008_R1_unpaired_001.fastq.gz
+Approx 30% complete for SN_Medulla_10U_S108_L008_R2_unpaired_001.fastq.gz
+Approx 55% complete for SN_Medulla_10U_S108_L008_R1_unpaired_001.fastq.gz
+Approx 35% complete for SN_Medulla_10U_S108_L008_R2_unpaired_001.fastq.gz
+Approx 60% complete for SN_Medulla_10U_S108_L008_R1_unpaired_001.fastq.gz
+Approx 40% complete for SN_Medulla_10U_S108_L008_R2_unpaired_001.fastq.gz
+Approx 65% complete for SN_Medulla_10U_S108_L008_R1_unpaired_001.fastq.gz
+Approx 45% complete for SN_Medulla_10U_S108_L008_R2_unpaired_001.fastq.gz
+Approx 70% complete for SN_Medulla_10U_S108_L008_R1_unpaired_001.fastq.gz
+Approx 50% complete for SN_Medulla_10U_S108_L008_R2_unpaired_001.fastq.gz
+Approx 55% complete for SN_Medulla_10U_S108_L008_R2_unpaired_001.fastq.gz
+Approx 75% complete for SN_Medulla_10U_S108_L008_R1_unpaired_001.fastq.gz
+Approx 60% complete for SN_Medulla_10U_S108_L008_R2_unpaired_001.fastq.gz
+Approx 80% complete for SN_Medulla_10U_S108_L008_R1_unpaired_001.fastq.gz
+Approx 65% complete for SN_Medulla_10U_S108_L008_R2_unpaired_001.fastq.gz
+Approx 85% complete for SN_Medulla_10U_S108_L008_R1_unpaired_001.fastq.gz
+Approx 70% complete for SN_Medulla_10U_S108_L008_R2_unpaired_001.fastq.gz
+Approx 90% complete for SN_Medulla_10U_S108_L008_R1_unpaired_001.fastq.gz
+Approx 75% complete for SN_Medulla_10U_S108_L008_R2_unpaired_001.fastq.gz
+Approx 95% complete for SN_Medulla_10U_S108_L008_R1_unpaired_001.fastq.gz
+Approx 80% complete for SN_Medulla_10U_S108_L008_R2_unpaired_001.fastq.gz
+Analysis complete for SN_Medulla_10U_S108_L008_R1_unpaired_001.fastq.gz
+Approx 85% complete for SN_Medulla_10U_S108_L008_R2_unpaired_001.fastq.gz
+Approx 90% complete for SN_Medulla_10U_S108_L008_R2_unpaired_001.fastq.gz
+Approx 95% complete for SN_Medulla_10U_S108_L008_R2_unpaired_001.fastq.gz
+Analysis complete for SN_Medulla_10U_S108_L008_R2_unpaired_001.fastq.gz
+application/gzip
+application/gzip
+Started analysis of SN_Medulla_50U_S109_L008_R1_paired_001.fastq.gz
+Started analysis of SN_Medulla_50U_S109_L008_R1_unpaired_001.fastq.gz
+Approx 5% complete for SN_Medulla_50U_S109_L008_R1_unpaired_001.fastq.gz
+Approx 10% complete for SN_Medulla_50U_S109_L008_R1_unpaired_001.fastq.gz
+Approx 15% complete for SN_Medulla_50U_S109_L008_R1_unpaired_001.fastq.gz
+Approx 20% complete for SN_Medulla_50U_S109_L008_R1_unpaired_001.fastq.gz
+Approx 25% complete for SN_Medulla_50U_S109_L008_R1_unpaired_001.fastq.gz
+Approx 30% complete for SN_Medulla_50U_S109_L008_R1_unpaired_001.fastq.gz
+Approx 35% complete for SN_Medulla_50U_S109_L008_R1_unpaired_001.fastq.gz
+Approx 40% complete for SN_Medulla_50U_S109_L008_R1_unpaired_001.fastq.gz
+Approx 45% complete for SN_Medulla_50U_S109_L008_R1_unpaired_001.fastq.gz
+Approx 50% complete for SN_Medulla_50U_S109_L008_R1_unpaired_001.fastq.gz
+Approx 55% complete for SN_Medulla_50U_S109_L008_R1_unpaired_001.fastq.gz
+Approx 60% complete for SN_Medulla_50U_S109_L008_R1_unpaired_001.fastq.gz
+Approx 65% complete for SN_Medulla_50U_S109_L008_R1_unpaired_001.fastq.gz
+Approx 70% complete for SN_Medulla_50U_S109_L008_R1_unpaired_001.fastq.gz
+Approx 75% complete for SN_Medulla_50U_S109_L008_R1_unpaired_001.fastq.gz
+Approx 80% complete for SN_Medulla_50U_S109_L008_R1_unpaired_001.fastq.gz
+Approx 85% complete for SN_Medulla_50U_S109_L008_R1_unpaired_001.fastq.gz
+Approx 90% complete for SN_Medulla_50U_S109_L008_R1_unpaired_001.fastq.gz
+Approx 95% complete for SN_Medulla_50U_S109_L008_R1_unpaired_001.fastq.gz
+Analysis complete for SN_Medulla_50U_S109_L008_R1_unpaired_001.fastq.gz
+application/gzip
+Started analysis of SN_Medulla_50U_S109_L008_R2_paired_001.fastq.gz
+Approx 5% complete for SN_Medulla_50U_S109_L008_R1_paired_001.fastq.gz
+Approx 5% complete for SN_Medulla_50U_S109_L008_R2_paired_001.fastq.gz
+Approx 5% complete for SN_Medulla_10U_S108_L008_R1_paired_001.fastq.gz
+Approx 5% complete for SN_Medulla_10U_S108_L008_R2_paired_001.fastq.gz
+Approx 10% complete for SN_Medulla_50U_S109_L008_R1_paired_001.fastq.gz
+Approx 10% complete for SN_Medulla_50U_S109_L008_R2_paired_001.fastq.gz
+Approx 10% complete for SN_Medulla_10U_S108_L008_R1_paired_001.fastq.gz
+Approx 10% complete for SN_Medulla_10U_S108_L008_R2_paired_001.fastq.gz
+Approx 15% complete for SN_Medulla_50U_S109_L008_R1_paired_001.fastq.gz
+Approx 15% complete for SN_Medulla_50U_S109_L008_R2_paired_001.fastq.gz
+Approx 15% complete for SN_Medulla_10U_S108_L008_R1_paired_001.fastq.gz
+Approx 15% complete for SN_Medulla_10U_S108_L008_R2_paired_001.fastq.gz
+Approx 20% complete for SN_Medulla_50U_S109_L008_R1_paired_001.fastq.gz
+Approx 20% complete for SN_Medulla_50U_S109_L008_R2_paired_001.fastq.gz
+Approx 20% complete for SN_Medulla_10U_S108_L008_R1_paired_001.fastq.gz
+Approx 20% complete for SN_Medulla_10U_S108_L008_R2_paired_001.fastq.gz
+Approx 25% complete for SN_Medulla_50U_S109_L008_R1_paired_001.fastq.gz
+Approx 25% complete for SN_Medulla_50U_S109_L008_R2_paired_001.fastq.gz
+Approx 25% complete for SN_Medulla_10U_S108_L008_R1_paired_001.fastq.gz
+Approx 25% complete for SN_Medulla_10U_S108_L008_R2_paired_001.fastq.gz
+Approx 30% complete for SN_Medulla_50U_S109_L008_R1_paired_001.fastq.gz
+Approx 30% complete for SN_Medulla_50U_S109_L008_R2_paired_001.fastq.gz
+Approx 35% complete for SN_Medulla_50U_S109_L008_R1_paired_001.fastq.gz
+Approx 30% complete for SN_Medulla_10U_S108_L008_R1_paired_001.fastq.gz
+Approx 30% complete for SN_Medulla_10U_S108_L008_R2_paired_001.fastq.gz
+Approx 35% complete for SN_Medulla_50U_S109_L008_R2_paired_001.fastq.gz

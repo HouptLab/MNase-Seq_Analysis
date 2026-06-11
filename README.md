@@ -111,9 +111,10 @@ curl -L -o /path/to/destination/GRCr8.zip https://genome-idx.s3.amazonaws.com/bt
 run bowtie2:
 
 ```
-bowtie2 -x bowtie2_indexes/GRCr8 -1 reads_R1.fq.gz -2 reads_R2.fq.gz -S GRCr8.1_alignment.sam -p 8
+nohup ./run_bowtie2.zsh <source_directory> <destination_directory> &
 ```
 
+Outputs SAM files to the destination directory. Logs to bowtie.log (and  bowtie2 logs per-sample bowtie2.log). 
 
 * -x: Specifies the index (use the prefix).
 * -1, -2: Your forward and reverse read files (can be gzipped).

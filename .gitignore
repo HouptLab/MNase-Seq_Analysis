@@ -1,3 +1,4 @@
 sequences/
 .DS_Store
 bowtie*/
+nohup.out

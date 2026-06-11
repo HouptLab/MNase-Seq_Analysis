@@ -13,7 +13,7 @@ or, copy to local directory
 rsync -avP thoupt@hpc-login.rcc.fsu.edu:/gpfs/research/medicine/sequencer/NovaSeqXPlus/Outputs_XP/2025_Outputs_XP/Thomas_Houpt_11-19-2025_SN_Medull ./
 ```
 
-# view first 10 lines
+view first 10 lines
 
 ```
 gzcat SN_Medulla_10U_S1_L008_R1_001.fastq.gz | head -n 10
@@ -30,8 +30,8 @@ for i in *fastq*; do fastqc $i -t 15 -o fastqc_raw/; done &> fastqc_raw.log
 
 ### Macos
 
-install ```brew install fastqc```
-install ```brew install parallel```
+* install ```brew install fastqc```
+* install ```brew install parallel```
 
 Script runs against all fastq.gz files in source directory, uses ```parallel``` for speed up, logs fastqc messages to fastqc_raw.log
 
@@ -60,7 +60,6 @@ You can monitor progress with ```tail -f trimming_B.log```.
 
 ### Macos
 
-TODO: put command into shell script, with timestamps
 
 Download jar from [Trimmomatic releases](https://github.com/usadellab/Trimmomatic/releases): version 0.40 has parallel unzipping.
 
@@ -75,7 +74,8 @@ Query: which are appropriate adapters? NEBNext_PE from the library kit?
 
 ```
 
-You can monitor progress with ```tail -f trimming_B.log```.
+
+You can monitor progress with ```tail -f trimming.log```.
 
 **put the original sequencing files in ```/raw```, and the paired/unpaired files in ```/trimmed```
 
@@ -86,13 +86,11 @@ You can monitor progress with ```tail -f trimming_B.log```.
 ```
 ./do_fastqc.sh ./do_fastqc.sh ./sequences/Thomas_Houpt_05-29-2026_Houpt_SN_Medulla/Houpt_SN_Medulla/trimmed ./fastqc_trimmed
 
-
 ```
 
 ## Align with bowtie2
 
 [bowtie2](https://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
-
 
 ### Macos
 

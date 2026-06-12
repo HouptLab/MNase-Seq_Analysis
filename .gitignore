@@ -2,3 +2,10 @@ sequences/
 .DS_Store
 bowtie*/
 nohup.out
+datasets
+dataformat
+ncbi/
+*.bed
+*.fastq*
+*.zip
+*.gz

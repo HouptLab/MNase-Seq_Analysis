@@ -2,20 +2,20 @@
 
 ## download sequence files from RCC
 
-```
+```bash
 ssh thoupt@hpc-login.rcc.fsu.edu
 cd /gpfs/research/medicine/sequencer/NovaSeqXPlus/Outputs_XP/2025_Outputs_XP/
 rsync -avP *.fastq.gz USERNAME@pauper.bio.fsu.edu:~/FOLDERNAMEOFCHOICE
 ```
 
 or, copy to local directory
-```
+```bash
 rsync -avP thoupt@hpc-login.rcc.fsu.edu:/gpfs/research/medicine/sequencer/NovaSeqXPlus/Outputs_XP/2025_Outputs_XP/Thomas_Houpt_11-19-2025_SN_Medull ./
 ```
 
 view first 10 lines
 
-```
+```bash
 gzcat SN_Medulla_10U_S1_L008_R1_001.fastq.gz | head -n 10
 ```
 
@@ -23,14 +23,15 @@ gzcat SN_Medulla_10U_S1_L008_R1_001.fastq.gz | head -n 10
 
 ### Pauper
 
-```
+```bash
 mkdir fastqc_raw 
 for i in *fastq*; do fastqc $i -t 15 -o fastqc_raw/; done &> fastqc_raw.log 
 ```
 
 To download and view the fastqc.html files, use ```rsync```
 
-```rsync -avc sn23h@pauper.bio.fsu.edu:~/medulla_analysis2/Thomas_Houpt_05-29-2026_Houpt_SN_Medulla/Houpt_SN_Medulla/fastqc_raw/*.html .
+```bash
+rsync -avc sn23h@pauper.bio.fsu.edu:~/medulla_analysis2/Thomas_Houpt_05-29-2026_Houpt_SN_Medulla/Houpt_SN_Medulla/fastqc_raw/*.html .
 ```
 
 
@@ -41,9 +42,8 @@ To download and view the fastqc.html files, use ```rsync```
 
 Script runs against all fastq.gz files in source directory, uses ```parallel``` for speed up, logs fastqc messages to fastqc_raw.log
 
-```
+```bash
 ./do_fastqc.sh <source_directory> <fastqc_output_directory>
-
 ```
 
 On MacStudio for 2 samples with R1 and R2 (so 4 fastq files) about 1 hour
@@ -57,7 +57,8 @@ http://www.usadellab.org/cms/index.php?page=trimmomatic
 ### Pauper
 
 run in same directory as fastq.gz files
-```
+
+```bash
 cd ~/medulla_analysis2/Thomas_Houpt_05-29-2026_Houpt_SN_Medulla/Houpt_SN_Medulla
 nohup bash -c 'for i in *_R1*; do java -jar ~/Trimmomatic-0.39/trimmomatic-0.39.jar PE -threads 20 -phred33 "$i" "${i/R1/R2}" "${i/R1/R1_paired}" "${i/R1/R1_unpaired}" "${i/R1/R2_paired}" "${i/R1/R2_unpaired}" ILLUMINACLIP:/home/sn23h/Trimmomatic-0.39/adapters/TruSeq3-PE.fa:2:30:10:1:TRUE MINLEN:25 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 < /dev/null; done' > trimming_B.log 2>&1 &
 ```
@@ -74,8 +75,7 @@ adapter files are in ```Trimmomatic-0.40/adapters```, and Trimmomatic looks ther
 Query: which are appropriate adapters? NEBNext_PE from the library kit?
 
 
-```
-
+```bash
 ./trim_pe.zsh ./sequences/Thomas_Houpt_05-29-2026_Houpt_SN_Medulla/Houpt_SN_Medulla
 
 ```
@@ -89,7 +89,7 @@ You can monitor progress with ```tail -f trimming.log```.
 
 ### Macos
 
-```
+```bash
 ./do_fastqc.sh ./do_fastqc.sh ./sequences/Thomas_Houpt_05-29-2026_Houpt_SN_Medulla/Houpt_SN_Medulla/trimmed ./fastqc_trimmed
 
 ```
@@ -108,7 +108,7 @@ download indexes from https://benlangmead.github.io/aws-indexes/bowtie (bowtie2 
 
 to copy bowtie2 indexes to pauper, use curl:
 
-```
+```bash
 curl -L -o /path/to/destination/GRCr8.zip https://genome-idx.s3.amazonaws.com/bt/GRCr8.zip
 ```
 
@@ -116,7 +116,7 @@ curl -L -o /path/to/destination/GRCr8.zip https://genome-idx.s3.amazonaws.com/bt
 
 run bowtie2 and pipe through samtools to get BAM files:
 
-```
+```bash
 nohup ./run_bowtie2.zsh <source_directory> <destination_directory> &
 ```
 
@@ -132,5 +132,34 @@ Outputs BAM files to the destination directory. Logs to bowtie.log (and  bowtie2
 
 We need to filter reads to only those that are ±1000bp of TSS sites of rat genes in GRCr8.
 
-1. get gene transcription start sites for GRCr8 from NCBI
+1. get gene transcription start sites for GRCr8 from NCBI as GTF file
 2. use bedtools to make a TSS bed file with ±1000bp spans
+
+* install NCBI [`datasets` and `dataformat`](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/command-line-tools/download-and-install/).
+
+```bash
+curl -o datasets 'https://ftp.ncbi.nlm.nih.gov/pub/datasets/command-line/v2/mac/datasets'
+curl -o dataformat 'https://ftp.ncbi.nlm.nih.gov/pub/datasets/command-line/v2/mac/dataformat'
+chmod +x datasets dataformat
+```
+
+* install bedtools with homebrew: `brew install bedtools`
+
+* download the genome sequence records for Rattus norvegicus RefSeq assembly GCF_036323735.1 (GRCr8) as annotated by the NCBI Eukaryotic Genome Annotation Pipeline; this annotation should be referred to as "GCF_036323735.1-RS_2024_02".
+
+```bash
+mkdir ncbi
+cd ncbi
+./datasets download genome accession GCF_036323735.1 --include gtf,genome
+unzip ncbi_dataset.zip
+# GTF lands at: ncbi/ncbi_dataset/data/GCF_036323735.1/genomic.gtf
+```
+
+* derive strand-aware TSS BED from genomic.gtf, using `awk`. Specify $3=="transcript" for one TSS per transcript (captures alternative TSSs; multiple per gene), or $3=="gene" if you want a single TSS per gene instead.
+
+```bash
+./make_tss_bed.zsh <input.gtf[.gz]> <output.bed> [chrom.sizes] [gene|transcript] 
+# e.g. ./make_tss_bed.zsh ncbi/ncbi_dataset/data/GCF_036323735.1/genomic.gtf GRCr8_TSS.bed   
+```
+
+Note: the chrom.sizes contig names must match column 1 of the BED (and your BAM). The TSS BED inherits the GTF's seqnames, so for an NCBI GRCr8 GTF those are RefSeq accessions — generate the matching chrom.sizes from the same NCBI FASTA (e.g. `samtools faidx GRCr8.fa` then `cut -f1,2 GRCr8.fa.fai > GRCr8.chrom.sizes`) so all three agree.

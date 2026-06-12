@@ -1,14 +1,21 @@
 #!/bin/zsh
 #
 # run_bowtie2.zsh  (macOS / zsh)
-# Align paired-end FASTQ files to GRCr8 with bowtie2.
+# Align paired-end FASTQ files to GRCr8 with bowtie2 and write
+# coordinate-sorted, indexed BAM files (unmapped reads removed).
 #
 # Usage:
 #   nohup ./run_bowtie2.zsh <source_directory> <destination_directory> &
 #
-# Outputs (SAM files, per-sample bowtie2 logs, and bowtie.log) are written
-# to <destination_directory> (created if it does not exist). The bowtie2
-# index path, thread count, and concurrency cap are configured below.
+# For each sample, bowtie2's SAM output is piped through samtools to:
+#   1. drop unmapped reads (samtools view -F 4),
+#   2. convert SAM -> BAM,
+#   3. coordinate-sort (samtools sort), and
+#   4. index the sorted BAM (samtools index -> .bam.bai).
+#
+# Outputs (sorted/indexed BAM files, per-sample bowtie2 logs, and bowtie.log)
+# are written to <destination_directory> (created if it does not exist). The
+# bowtie2 index path, thread counts, and concurrency cap are configured below.
 
 setopt PIPE_FAIL       # a pipeline fails if any stage fails
 setopt NULL_GLOB       # a non-matching glob expands to nothing (no error)
@@ -42,7 +49,8 @@ SCRIPT_DIR=${0:A:h}
 
 INDEX="$SCRIPT_DIR/bowtie2_indexes/GRCr8"
 THREADS=8
-MAX_JOBS=4        # max bowtie2 jobs to run concurrently (MAX_JOBS * THREADS <= cores)
+SAMTOOLS_THREADS=4   # extra threads for samtools view/sort (bursty; mostly used during sort)
+MAX_JOBS=4           # max alignment jobs to run concurrently (MAX_JOBS * THREADS <= cores)
 PATTERN="*_R1_paired*.fastq.gz"
 LOGFILE="$DEST_DIR/bowtie.log"
 
@@ -57,6 +65,19 @@ fi
 log() {
     print -r -- "$(date '+%Y-%m-%d %H:%M:%S') $*" >> "$LOGFILE"
 }
+
+# ---- Dependency check --------------------------------------------------------
+for tool in bowtie2 samtools; do
+    if ! command -v $tool >/dev/null 2>&1; then
+        print -u2 -- "Error: required tool '$tool' not found in PATH."
+        exit 1
+    fi
+done
+
+# ---- Tool versions -----------------------------------------------------------
+# Record the aligner/toolkit versions for provenance (first line of each).
+log "bowtie2 version: $(bowtie2 --version 2>&1 | head -n 1)"
+log "samtools version: $(samtools --version 2>&1 | head -n 1)"
 
 # ---- Index resolution --------------------------------------------------------
 # Accept either a bowtie2 basename prefix (…/GRCr8 with …/GRCr8.1.bt2 alongside)
@@ -87,6 +108,32 @@ resolve_index() {
     return 1
 }
 
+# ---- Alignment worker --------------------------------------------------------
+# Run the full bowtie2 -> samtools pipeline for one sample, then index the BAM.
+# bowtie2 streams SAM to stdout; samtools drops unmapped reads, converts to BAM,
+# and coordinate-sorts to "$bam"; samtools index then writes "$bam.bai".
+#
+# Returns the pipeline's exit status (nonzero if ANY stage failed, thanks to
+# PIPE_FAIL) or the index step's status. A partial BAM is removed on failure.
+# bowtie2's alignment summary (stderr) and samtools messages reach the caller's
+# stderr, which is redirected to the per-sample log at launch.
+align_sample() {
+    local index=$1 r1=$2 r2=$3 threads=$4 bam=$5
+    local rc
+
+    bowtie2 -x "$index" -1 "$r1" -2 "$r2" -p "$threads" \
+        | samtools view -@ "$SAMTOOLS_THREADS" -b -F 4 - \
+        | samtools sort -@ "$SAMTOOLS_THREADS" -T "${bam%.bam}.sorttmp" -o "$bam" -
+    rc=$?                              # PIPE_FAIL: nonzero if any stage failed
+
+    if (( rc != 0 )); then
+        rm -f -- "$bam"               # discard any truncated output
+        return $rc
+    fi
+
+    samtools index "$bam"             # writes "$bam.bai"
+}
+
 # ---- Main --------------------------------------------------------------------
 log "=== Run started ==="
 log "Source directory: $SRC_DIR"
@@ -102,7 +149,7 @@ if ! INDEX=$(resolve_index "$INDEX"); then
     exit 1
 fi
 
-log "Index: $INDEX  Threads: $THREADS  Max concurrent: $MAX_JOBS  Pattern: $PATTERN"
+log "Index: $INDEX  Threads: $THREADS  Samtools threads: $SAMTOOLS_THREADS  Max concurrent: $MAX_JOBS  Pattern: $PATTERN"
 
 # Collect matching R1 files. ${~PATTERN} forces glob expansion of the variable;
 # NULL_GLOB makes an empty match yield an empty array instead of an error.
@@ -135,10 +182,10 @@ for i in "${files[@]}"; do
         continue
     fi
 
-    # Derive a per-sample name so concurrent jobs don't clobber one SAM file.
+    # Derive a per-sample name so concurrent jobs don't clobber one BAM file.
     sample=${i:t}                  # :t = tail (basename)
     sample=${sample%%_R1_paired*}
-    sam="$DEST_DIR/${sample}_GRCr8.1_alignment.sam"
+    bam="$DEST_DIR/${sample}_GRCr8.1_alignment.bam"
     sample_log="$DEST_DIR/${sample}.bowtie2.log"
 
     # Throttle: if at capacity, wait for the oldest job before launching more.
@@ -146,10 +193,12 @@ for i in "${files[@]}"; do
         reap_one
     done
 
-    log "Launching alignment for sample '$sample' -> $sam (bowtie2 output: $sample_log)"
+    log "Launching alignment for sample '$sample' -> $bam (log: $sample_log)"
 
-    nohup bowtie2 -x "$INDEX" -1 "$i" -2 "$r2" -S "$sam" -p "$THREADS" \
-        > "$sample_log" 2>&1 &
+    # The script is intended to be started under nohup (see usage), and the
+    # ignore-SIGHUP disposition is inherited by these background workers, so we
+    # neither need nor can wrap a shell function in its own nohup.
+    align_sample "$INDEX" "$i" "$r2" "$THREADS" "$bam" > "$sample_log" 2>&1 &
 
     pid=$!
     running+=($pid)

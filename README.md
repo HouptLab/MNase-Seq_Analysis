@@ -28,6 +28,12 @@ mkdir fastqc_raw
 for i in *fastq*; do fastqc $i -t 15 -o fastqc_raw/; done &> fastqc_raw.log 
 ```
 
+To download and view the fastqc.html files, use ```rsync```
+
+```rsync -avc sn23h@pauper.bio.fsu.edu:~/medulla_analysis2/Thomas_Houpt_05-29-2026_Houpt_SN_Medulla/Houpt_SN_Medulla/fastqc_raw/*.html .
+```
+
+
 ### Macos
 
 * install ```brew install fastqc```
@@ -108,15 +114,23 @@ curl -L -o /path/to/destination/GRCr8.zip https://genome-idx.s3.amazonaws.com/bt
 
 
 
-run bowtie2:
+run bowtie2 and pipe through samtools to get BAM files:
 
 ```
 nohup ./run_bowtie2.zsh <source_directory> <destination_directory> &
 ```
 
-Outputs SAM files to the destination directory. Logs to bowtie.log (and  bowtie2 logs per-sample bowtie2.log). 
+Outputs BAM files to the destination directory. Logs to bowtie.log (and  bowtie2 logs per-sample bowtie2.log). 
 
 * -x: Specifies the index (use the prefix).
 * -1, -2: Your forward and reverse read files (can be gzipped).
-* -S: Output SAM file.
+* -S: Output SAM file. (not used, because outpur piped through samtools to make BAM file)
 * -p 8: Uses 8 threads for faster alignment (adjust as needed). 
+
+
+## Construct TSS bed file
+
+We need to filter reads to only those that are ±1000bp of TSS sites of rat genes in GRCr8.
+
+1. get gene transcription start sites for GRCr8 from NCBI
+2. use bedtools to make a TSS bed file with ±1000bp spans

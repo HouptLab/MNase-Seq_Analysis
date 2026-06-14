@@ -98,6 +98,12 @@ You can monitor progress with ```tail -f trimming.log```.
 
 [bowtie2](https://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
 
+We align to current (2024) reference genome assembly GRCr8 for rat 
+* [paper](https://pmc.ncbi.nlm.nih.gov/articles/PMC11610589/) 
+* [NCBI site](https://www.ncbi.nlm.nih.gov/datasets/genome/GCA_036323735.1/)
+* [assembly report (txt download)](https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/036/323/735/GCF_036323735.1_GRCr8/GCF_036323735.1_GRCr8_assembly_report.txt
+) -- gives ascension numbers for each chromosome and mitochondrion
+
 ### Macos
 
 install ```brew install bowtie2```
@@ -155,7 +161,7 @@ unzip ncbi_dataset.zip
 # GTF lands at: ncbi/ncbi_dataset/data/GCF_036323735.1/genomic.gtf
 ```
 
-* derive strand-aware TSS BED from genomic.gtf, using `awk`. Specify $3=="transcript" for one TSS per transcript (captures alternative TSSs; multiple per gene), or $3=="gene" if you want a single TSS per gene instead.
+* derive strand-aware TSS BED from genomic.gtf, using `awk`. Specify 4th argument as "transcript" for one TSS per transcript (captures alternative TSSs; multiple per gene), or as "gene" if you want a single TSS per gene instead.
 
 ```bash
 ./make_tss_bed.zsh <input.gtf[.gz]> <output.bed> [chrom.sizes] [gene|transcript] 

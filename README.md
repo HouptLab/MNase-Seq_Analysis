@@ -1,5 +1,26 @@
 # MNase-Seq Analysis
 
+## Programs and Dependencies
+
+- Trimmomatic 0.40
+- fastqc  0.12.1
+- bowtie2 2.5.5
+- parallel GNU parallel 20260522
+- samtools 1.23
+- datasets 18.30.1 (need to place in /bin or similiar)
+- dataformat ?
+- bedtools  v2.31.1
+
+## Reference sequence files
+
+- bowtie2 indexes for GRCr8
+- GRCr8_TSS_1kb.bed
+
+### for making GRCr8_TSS.bed and GRCr8_TSS_1kb.bed
+- ncbi/ncbi_dataset/data/GCF_036323735.1/genomic.gtf
+- ./ncbi/ncbi_dataset/data/GCF_036323735.1GCF_036323735.1_GRCr8_genomic.fna
+- ncbi/ncbi_dataset/data/GCF_036323735.1/GRCr8.chrom.sizes
+
 ## download sequence files from RCC
 
 ```bash
@@ -134,7 +155,7 @@ Outputs BAM files to the destination directory. Logs to bowtie.log (and  bowtie2
 * -p 8: Uses 8 threads for faster alignment (adjust as needed). 
 
 
-## Construct TSS bed file
+## Construct TSS bed file (`GRCr8_TSS_1kb.bed`)
 
 We need to filter reads to only those that are ±1000bp of TSS sites of rat genes in GRCr8.
 
@@ -147,6 +168,8 @@ We need to filter reads to only those that are ±1000bp of TSS sites of rat gene
 curl -o datasets 'https://ftp.ncbi.nlm.nih.gov/pub/datasets/command-line/v2/mac/datasets'
 curl -o dataformat 'https://ftp.ncbi.nlm.nih.gov/pub/datasets/command-line/v2/mac/dataformat'
 chmod +x datasets dataformat
+mv datasets usr/local/bin
+mv dataformat usr/local/bin
 ```
 
 * install bedtools with homebrew: `brew install bedtools`
@@ -161,11 +184,23 @@ unzip ncbi_dataset.zip
 # GTF lands at: ncbi/ncbi_dataset/data/GCF_036323735.1/genomic.gtf
 ```
 
+Note: the chrom.sizes contig names must match column 1 of the BED (and your BAM). The TSS BED inherits the GTF's seqnames, so for an NCBI GRCr8 GTF those are RefSeq accessions — generate the matching chrom.sizes from the same NCBI FASTA (e.g. `samtools faidx GRCr8.fa` then `cut -f1,2 GRCr8.fa.fai > GRCr8.chrom.sizes`) so all three agree.
+
+GRCr8.fa is same as ./ncbi/ncbi_dataset/data/GCF_036323735.1GCF_036323735.1_GRCr8_genomic.fna, so make a symlink rather than renaming original, then:
+
+* run `samtools faidx GRCr8.fa` to build an index of GRCr8.fa, puts it in GRCr8.fa.fai
+* run `cut -f1,2 GRCr8.fa.fai > GRCr8.chrom.sizes` takes the first 2 columns of the index (name of region and length), which will make a valid bed format file of chromosome sizes.
+
+```bash
+samtools faidx GRCr8.fa 
+cut -f1,2 GRCr8.fa.fai > GRCr8.chrom.sizes
+```
+
 * derive strand-aware TSS BED from genomic.gtf, using `awk`. Specify 4th argument as "transcript" for one TSS per transcript (captures alternative TSSs; multiple per gene), or as "gene" if you want a single TSS per gene instead.
 
 ```bash
 ./make_tss_bed.zsh <input.gtf[.gz]> <output.bed> [chrom.sizes] [gene|transcript] 
-# e.g. ./make_tss_bed.zsh ncbi/ncbi_dataset/data/GCF_036323735.1/genomic.gtf GRCr8_TSS.bed   
+# e.g. ./make_tss_bed.zsh ncbi/ncbi_dataset/data/GCF_036323735.1/genomic.gtf GRCr8_TSS.bed   ncbi/ncbi_dataset/data/GCF_036323735.1/GRCr8.chrom.sizes
 ```
+produces 2 files: `GRCr8_TSS.bed` with just TSS of each gene (i.e. 1 base wide), and `GRCr8_TSS_1kb.bed`, with span from 1kb upstream to 1kb downstream of TSS. Use `GRCr8_TSS_1kb.bed` to filter aligned reads to within TSS span.
 
-Note: the chrom.sizes contig names must match column 1 of the BED (and your BAM). The TSS BED inherits the GTF's seqnames, so for an NCBI GRCr8 GTF those are RefSeq accessions — generate the matching chrom.sizes from the same NCBI FASTA (e.g. `samtools faidx GRCr8.fa` then `cut -f1,2 GRCr8.fa.fai > GRCr8.chrom.sizes`) so all three agree.

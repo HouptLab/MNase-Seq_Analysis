@@ -237,6 +237,7 @@ GRCr8.fa is same as ./ncbi/ncbi_dataset/data/GCF_036323735.1GCF_036323735.1_GRCr
 samtools faidx GRCr8.fa 
 cut -f1,2 GRCr8.fa.fai > GRCr8.chrom.sizes
 ```
+NOTE: deleted an chrY_unlocalized "chromosomes" beginning with NW_ from chrom.sizes.
 
 * derive strand-aware TSS BED from genomic.gtf, using `awk`. Specify 4th argument as "transcript" for one TSS per transcript (captures alternative TSSs; multiple per gene), or as "gene" if you want a single TSS per gene instead.
 

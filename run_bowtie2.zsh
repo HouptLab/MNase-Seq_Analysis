@@ -121,7 +121,7 @@ align_sample() {
     local index=$1 r1=$2 r2=$3 threads=$4 bam=$5
     local rc
 
-    bowtie2 -x "$index" -1 "$r1" -2 "$r2" -p "$threads" \
+    bowtie2 --no-discordant --no-mixed -x "$index" -1 "$r1" -2 "$r2" -p "$threads" \
         | samtools view -@ "$SAMTOOLS_THREADS" -b -F 4 - \
         | samtools sort -@ "$SAMTOOLS_THREADS" -T "${bam%.bam}.sorttmp" -o "$bam" -
     rc=$?                              # PIPE_FAIL: nonzero if any stage failed

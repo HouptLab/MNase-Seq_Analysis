@@ -182,8 +182,15 @@ run bowtie2 and pipe through samtools to get BAM files:
 nohup ./run_bowtie2.zsh <source_directory> <destination_directory> &
 ```
 
+e.g.
+
+```bash
+nohup ./run_bowtie2.zsh ./sequences/Thomas_Houpt_05-29-2026_Houpt_SN_Medulla/Houpt_SN_Medulla/trimmed ./sequences/Thomas_Houpt_05-29-2026_Houpt_SN_Medulla/Houpt_SN_Medulla/aligned &
+ ```
+
 Outputs BAM files to the destination directory. Logs to bowtie.log (and  bowtie2 logs per-sample bowtie2.log). 
 
+* specify non-discordant and no-mixed
 * -x: Specifies the index (use the prefix).
 * -1, -2: Your forward and reverse read files (can be gzipped).
 * -S: Output SAM file. (not used, because outpur piped through samtools to make BAM file)

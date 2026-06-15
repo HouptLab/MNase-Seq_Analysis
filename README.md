@@ -2,24 +2,59 @@
 
 ## Programs and Dependencies
 
-- Trimmomatic 0.40
-- fastqc  0.12.1
+- Trimmomatic 0.40 
+  
+  download java jar from [Trimmomatic releases](https://github.com/usadellab/Trimmomatic/releases), place in /Applications
+  
+- fastqc  0.12.1 
+
+ `brew install fastqc`
+  
 - bowtie2 2.5.5
-- parallel GNU parallel 20260522
-- samtools 1.23
-- datasets 18.30.1 (need to place in /bin or similiar)
-- dataformat ?
-- bedtools  v2.31.1
+
+  `brew install bowtie2`
+  
+- parallel GNU parallel 20260522 
+
+  `brew install parallel`
+  
+- samtools 1.23 
+
+  `brew install samtools`
+  
+- datasets 18.30.1
+- dataformat ? can't find dataformat version 
+
+```bash
+curl -o datasets 'https://ftp.ncbi.nlm.nih.gov/pub/datasets/command-line/v2/mac/datasets'
+curl -o dataformat 'https://ftp.ncbi.nlm.nih.gov/pub/datasets/command-line/v2/mac/dataformat'
+chmod +x datasets dataformat
+mv datasets usr/local/bin
+mv dataformat usr/local/bin
+```
+  
+- bedtools  v2.31.1 
+
+  `brew install bedtools`
 
 ## Reference sequence files
 
 - bowtie2 indexes for GRCr8
+
+  download indexes from https://benlangmead.github.io/aws-indexes/bowtie (bowtie2 maintainer site), put into `sequences/bowtie2_indexes/GRCr8/`
+
+```bash
+curl -L -o sequences/bowtie2_indexes/GRCr8.zip \
+           https://genome-idx.s3.amazonaws.com/bt/GRCr8.zip
+```
+
 - GRCr8_TSS_1kb.bed
 
-### for making GRCr8_TSS.bed and GRCr8_TSS_1kb.bed
-- ncbi/ncbi_dataset/data/GCF_036323735.1/genomic.gtf
-- ./ncbi/ncbi_dataset/data/GCF_036323735.1GCF_036323735.1_GRCr8_genomic.fna
-- ncbi/ncbi_dataset/data/GCF_036323735.1/GRCr8.chrom.sizes
+  made by make_tss_bed.zsh from GRCr8 annotation files:
+
+  - ncbi/ncbi_dataset/data/GCF_036323735.1/genomic.gtf
+  - ./ncbi/ncbi_dataset/data/GCF_036323735.1GCF_036323735.1_GRCr8_genomic.fna
+  - ncbi/ncbi_dataset/data/GCF_036323735.1/GRCr8.chrom.sizes
 
 ## download sequence files from RCC
 
@@ -127,7 +162,7 @@ We align to current (2024) reference genome assembly GRCr8 for rat
 
 ### Macos
 
-install ```brew install bowtie2```
+install `brew install bowtie2`
 
 - need to get bowtie2 indices for rat genome (GRCr8 for rat)
 
@@ -136,7 +171,7 @@ download indexes from https://benlangmead.github.io/aws-indexes/bowtie (bowtie2 
 to copy bowtie2 indexes to pauper, use curl:
 
 ```bash
-curl -L -o /path/to/destination/GRCr8.zip https://genome-idx.s3.amazonaws.com/bt/GRCr8.zip
+curl -L -o sequences/bowtie2_indexes/GRCr8.zip https://genome-idx.s3.amazonaws.com/bt/GRCr8.zip
 ```
 
 

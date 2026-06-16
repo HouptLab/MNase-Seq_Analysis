@@ -51,16 +51,17 @@ cut -f1,2 GRCr8.fa.fai > GRCr8.chrom.sizes
 Run `make_tss_bed.zsh` to derive strand-aware TSS BED from `genomic.gtf`,
 
 ```bash
-./make_tss_bed.zsh <input.gtf[.gz]> <output_TSS.bed> [chrom.sizes] [gene|transcript] 
+./make_tss_bed.zsh [--no-drop] <input.gtf[.gz]> <output_TSS.bed> [chrom.sizes] [gene|transcript] 
 # generates "<output>_TSS.bed" and "<output>_TSS_1kb.bed"
 ```
 
-`make_tss_bed.zsh` takes 4 arguments:
+`make_tss_bed.zsh` takes 4 arguments and one flag:
 
 1. the path to GRCr8 gtf file.
 2. the output BED file (e.g. `GRCr8_TSS.bed`), which will contain just the first base of each gene/transcript from the gtf file.
 3. the path to the chromosome sizes file (e.g. `GRCr8.chrom.sizes`), required to make valid +/- 1kb flanking regions. If the chromosome sizes file is provided, then the +/-1kb TSS bed file (e.g. `GRCr8_TSS_1kb.bed`) is generated. If no chromosome sizes file is provided, then only the TSS bed file is generated. 
 4. An optional 4th argument as "transcript" for one TSS per transcript (captures alternative TSSs; multiple per gene), or as "gene" if you want a single TSS per gene instead. The default if unspecified is "gene".
+5. a `--no-drop` flag that will retain TSSs that are within 1kb of the chromosome ends (which appear as truncated flanking regions in the +/-1kb TSS bed file.) The default is that TSSs too close to the ends are dropped from the final BED files.
 
 The `make_tss_bed.zsh` script uses `awk` to extract the TSS for each gene from `genomic.gtf`. If the chromosome sizes file is provided, the script then calls `bedtools slop` to produce a bed file with 1kb flanking spans. (Currently, the size of the flank is hardcoded in the script as `FLANK=1000`.)
 
@@ -100,4 +101,4 @@ NC_086019.1	207500958	207509276	Th	.	-
 NC_086022.1	80211110	80213111	Npy	.	+
   ```
 
-
+* By default, if a TSS is too close to the ends of a chromosome (e.g., with 1 kb of either 0 or chromosome size), then the TSS is dropped from the TSS BED file and the +/- 1kb BED file.  If the `--no-drop` flag is set, then all TSS are retained, and  `bedtools slop`  generates an entry for the TSS but truncates the flanking region. So a gene with TSS at 500, with +/- 1kb from -500 to 1501, will be truncated to 0 to 1501. 

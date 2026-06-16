@@ -24,8 +24,13 @@
 # names match those in the GTF (for NCBI GRCr8 GTFs that means RefSeq
 # accessions). Those names must match both your chrom.sizes and your BAM.
 #
+# By default, TSSs within FLANK bp of either chromosome end are dropped before
+# slop, so every emitted window is a full +/- FLANK bp with no clamping. Pass
+# --no-drop to disable this and keep all TSSs (slop will then clamp edge windows
+# to chromosome bounds, as before).
+#
 # Usage:
-#   ./make_tss_bed.zsh <input.gtf[.gz]> <output.bed> [chrom.sizes] [gene|transcript]
+#   ./make_tss_bed.zsh [--no-drop] <input.gtf[.gz]> <output.bed> [chrom.sizes] [gene|transcript]
 
 setopt PIPE_FAIL       # a pipeline fails if any stage fails
 
@@ -45,8 +50,24 @@ FLANK=1000                                    # bp added on each side by slop (-
 CHROM_SIZES="$SCRIPT_DIR/GRCr8.chrom.sizes"   # default; override with 3rd argument
 
 # ---- Argument handling -------------------------------------------------------
+# Optional flags precede the positional arguments. --drop (default) removes
+# TSSs too close to a chromosome end before slop; --no-drop keeps them.
+DROP_EDGE=1
+while [[ $# -gt 0 && $1 == --* ]]; do
+    case $1 in
+        --no-drop) DROP_EDGE=0; shift ;;
+        --drop)    DROP_EDGE=1; shift ;;
+        --)        shift; break ;;
+        *)
+            print -u2 -- "Error: unknown option '$1'."
+            print -u2 -- "Usage: $0 [--no-drop] <input.gtf[.gz]> <output.bed> [chrom.sizes] [gene|transcript]"
+            exit 1
+            ;;
+    esac
+done
+
 if [[ $# -lt 2 || $# -gt 4 ]]; then
-    print -u2 -- "Usage: $0 <input.gtf[.gz]> <output.bed> [chrom.sizes] [gene|transcript]"
+    print -u2 -- "Usage: $0 [--no-drop] <input.gtf[.gz]> <output.bed> [chrom.sizes] [gene|transcript]"
     exit 1
 fi
 
@@ -90,8 +111,10 @@ fi
 tmp="$BED.tmp.$$"
 TMP_FILES+=("$tmp")
 
+# -F'\t'
+
 "${reader[@]}" "$GTF" \
-  | awk -v feature="$FEATURE" 'BEGIN { OFS = "\t" }
+  | awk  -v feature="$FEATURE" 'BEGIN { OFS = "\t" } 
          $3 == feature {
              if ($7 == "+") { s = $4 - 1; e = $4 }
              else           { s = $5 - 1; e = $5 }
@@ -142,7 +165,35 @@ if [[ -e $CHROM_SIZES ]]; then
     slop_tmp="$SLOP_BED.tmp.$$"
     TMP_FILES+=("$slop_tmp")
 
-    bedtools slop -b "$FLANK" -i "$BED" -g "$CHROM_SIZES" > "$slop_tmp"
+    # Choose slop's input: either the full TSS BED, or a filtered copy with
+    # edge-proximal TSSs removed (default). Filtering keeps a TSS only if
+    # (start - FLANK) >= 0 AND (end + FLANK) <= chrom length, reading lengths
+    # from $CHROM_SIZES. Records on chromosomes absent from chrom.sizes are
+    # dropped (no length to validate; slop would otherwise error on them).
+    slop_input="$BED"
+    if (( DROP_EDGE )); then
+        inbounds_tmp="$BED.inbounds.$$"
+        TMP_FILES+=("$inbounds_tmp")
+
+        awk -v f="$FLANK" 'BEGIN { OFS = "\t" }
+             FNR == NR { len[$1] = $2; next }
+             ($1 in len) && ($2 - f) >= 0 && ($3 + f) <= len[$1]' \
+             "$CHROM_SIZES" "$BED" > "$inbounds_tmp"
+        rc=$?
+        if (( rc != 0 )); then
+            print -u2 -- "Error: in-bounds TSS filtering failed (exit status $rc)."
+            exit $rc               # trap removes the temp file
+        fi
+
+        kept=$(wc -l < "$inbounds_tmp" | tr -d ' ')
+        dropped=$(( n - kept ))
+        print -- "Filtered TSSs: kept $kept, dropped $dropped within ${FLANK} bp of a chromosome end (or on an unknown chromosome)."
+        slop_input="$inbounds_tmp"
+    else
+        print -- "Edge filtering disabled (--no-drop); slop will clamp edge windows to chromosome bounds."
+    fi
+
+    bedtools slop -b "$FLANK" -i "$slop_input" -g "$CHROM_SIZES" > "$slop_tmp"
     rc=$?
     if (( rc != 0 )); then
         print -u2 -- "Error: bedtools slop failed (exit status $rc)."

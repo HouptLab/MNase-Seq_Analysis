@@ -22,20 +22,6 @@
 
   `brew install samtools`
   
-- datasets 18.30.1
-- dataformat ? can't find dataformat version 
-
-```bash
-curl -o datasets 'https://ftp.ncbi.nlm.nih.gov/pub/datasets/command-line/v2/mac/datasets'
-curl -o dataformat 'https://ftp.ncbi.nlm.nih.gov/pub/datasets/command-line/v2/mac/dataformat'
-chmod +x datasets dataformat
-mv datasets usr/local/bin
-mv dataformat usr/local/bin
-```
-  
-- bedtools  v2.31.1 
-
-  `brew install bedtools`
 
 ## Reference sequence files
 
@@ -50,11 +36,7 @@ curl -L -o sequences/bowtie2_indexes/GRCr8.zip \
 
 - GRCr8_TSS_1kb.bed
 
-  made by make_tss_bed.zsh from GRCr8 annotation files:
-
-  - ncbi/ncbi_dataset/data/GCF_036323735.1/genomic.gtf
-  - ./ncbi/ncbi_dataset/data/GCF_036323735.1GCF_036323735.1_GRCr8_genomic.fna
-  - ncbi/ncbi_dataset/data/GCF_036323735.1/GRCr8.chrom.sizes
+  see `build_TSS_1kb.md` in this repository. The 1kb flanking TSS regions file is made by `make_tss_bed.zsh` from GRCr8 annotation files.
 
 ## download sequence files from RCC
 
@@ -197,53 +179,4 @@ Outputs BAM files to the destination directory. Logs to bowtie.log (and  bowtie2
 * -p 8: Uses 8 threads for faster alignment (adjust as needed). 
 
 
-## Construct TSS bed file (`GRCr8_TSS_1kb.bed`)
-
-We need to filter reads to only those that are ±1000bp of TSS sites of rat genes in GRCr8.
-
-1. get gene transcription start sites for GRCr8 from NCBI as GTF file
-2. use bedtools to make a TSS bed file with ±1000bp spans
-
-* install NCBI [`datasets` and `dataformat`](https://www.ncbi.nlm.nih.gov/datasets/docs/v2/command-line-tools/download-and-install/).
-
-```bash
-curl -o datasets 'https://ftp.ncbi.nlm.nih.gov/pub/datasets/command-line/v2/mac/datasets'
-curl -o dataformat 'https://ftp.ncbi.nlm.nih.gov/pub/datasets/command-line/v2/mac/dataformat'
-chmod +x datasets dataformat
-mv datasets usr/local/bin
-mv dataformat usr/local/bin
-```
-
-* install bedtools with homebrew: `brew install bedtools`
-
-* download the genome sequence records for Rattus norvegicus RefSeq assembly GCF_036323735.1 (GRCr8) as annotated by the NCBI Eukaryotic Genome Annotation Pipeline; this annotation should be referred to as "GCF_036323735.1-RS_2024_02".
-
-```bash
-mkdir ncbi
-cd ncbi
-./datasets download genome accession GCF_036323735.1 --include gtf,genome
-unzip ncbi_dataset.zip
-# GTF lands at: ncbi/ncbi_dataset/data/GCF_036323735.1/genomic.gtf
-```
-
-Note: the chrom.sizes contig names must match column 1 of the BED (and your BAM). The TSS BED inherits the GTF's seqnames, so for an NCBI GRCr8 GTF those are RefSeq accessions — generate the matching chrom.sizes from the same NCBI FASTA (e.g. `samtools faidx GRCr8.fa` then `cut -f1,2 GRCr8.fa.fai > GRCr8.chrom.sizes`) so all three agree.
-
-GRCr8.fa is same as ./ncbi/ncbi_dataset/data/GCF_036323735.1GCF_036323735.1_GRCr8_genomic.fna, so make a symlink rather than renaming original, then:
-
-* run `samtools faidx GRCr8.fa` to build an index of GRCr8.fa, puts it in GRCr8.fa.fai
-* run `cut -f1,2 GRCr8.fa.fai > GRCr8.chrom.sizes` takes the first 2 columns of the index (name of region and length), which will make a valid bed format file of chromosome sizes.
-
-```bash
-samtools faidx GRCr8.fa 
-cut -f1,2 GRCr8.fa.fai > GRCr8.chrom.sizes
-```
-NOTE: deleted an chrY_unlocalized "chromosomes" beginning with NW_ from chrom.sizes.
-
-* derive strand-aware TSS BED from genomic.gtf, using `awk`. Specify 4th argument as "transcript" for one TSS per transcript (captures alternative TSSs; multiple per gene), or as "gene" if you want a single TSS per gene instead.
-
-```bash
-./make_tss_bed.zsh <input.gtf[.gz]> <output.bed> [chrom.sizes] [gene|transcript] 
-# e.g. ./make_tss_bed.zsh ncbi/ncbi_dataset/data/GCF_036323735.1/genomic.gtf GRCr8_TSS.bed   ncbi/ncbi_dataset/data/GCF_036323735.1/GRCr8.chrom.sizes
-```
-produces 2 files: `GRCr8_TSS.bed` with just TSS of each gene (i.e. 1 base wide), and `GRCr8_TSS_1kb.bed`, with span from 1kb upstream to 1kb downstream of TSS. Use `GRCr8_TSS_1kb.bed` to filter aligned reads to within TSS span.
 

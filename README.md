@@ -156,6 +156,7 @@ to copy bowtie2 indexes to pauper, use curl:
 curl -L -o sequences/bowtie2_indexes/GRCr8.zip https://genome-idx.s3.amazonaws.com/bt/GRCr8.zip
 ```
 
+and place in `./bowtie2_indexes/GRCr8`
 
 
 run bowtie2 and pipe through samtools to get BAM files:
@@ -173,10 +174,24 @@ nohup ./run_bowtie2.zsh ./sequences/Thomas_Houpt_05-29-2026_Houpt_SN_Medulla/Hou
 Outputs BAM files to the destination directory. Logs to bowtie.log (and  bowtie2 logs per-sample bowtie2.log). 
 
 * specify non-discordant and no-mixed
-* -x: Specifies the index (use the prefix).
+* -x: Specifies the index (use the prefix). -- currently hardcoded to "$SCRIPT_DIR/bowtie2_indexes/GRCr8"
 * -1, -2: Your forward and reverse read files (can be gzipped).
-* -S: Output SAM file. (not used, because outpur piped through samtools to make BAM file)
 * -p 8: Uses 8 threads for faster alignment (adjust as needed). 
 
+The bowtie2 alignment results are piped to `samtools` to directly produce sorted BAM files. For each generated BAM file, `samtools index` is  called to generate bam.bai index files, and `samtools flagstat` is called to provide summary statistics.
 
+To view BAM file contents:
 
+```bash
+samtools view input.bam | head -10        # first 10 alignment records
+samtools view -h input.bam | head -10     # include header lines (@HD, @SQ, etc.)
+samtools head input.bam                    # header only
+```
+
+## Remove duplicates 
+
+(samtools flagstat reports no duplicates? so do we need to do this step)
+
+samtools fixmate -m Sorted_names.bam Fixmate.bam
+samtools sort -o Sorted.bam Fixmate.bam
+samtools markdup -r -s Sorted.bam Final_File.bam

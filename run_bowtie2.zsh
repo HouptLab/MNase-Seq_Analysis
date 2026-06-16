@@ -132,6 +132,7 @@ align_sample() {
     fi
 
     samtools index "$bam"             # writes "$bam.bai"
+    samtools flagstat "$bam" > "${bam%.bam}.flagstat.txt"   # alignment summary
 }
 
 # ---- Main --------------------------------------------------------------------

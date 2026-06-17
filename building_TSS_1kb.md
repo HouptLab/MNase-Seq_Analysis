@@ -79,17 +79,17 @@ THe script produces 2 files: `GRCr8_TSS.bed` with just TSS of each gene (i.e. 1 
 
   So for a gene like `Npy`, the BED line for the entire transcript is:
 
-  ```bed
+```bed
 NC_086022.1	80212110	80219309	Npy	.	+
-  ```
+```
 
   Transcription start (the first base of the transcript) is at base 80212110 of chromosome 4 (the chromStart field). The last base of the transcript is base 80212110 (1 base before the BED chromEnd field). `Npy` is on the + strand, so it runs from lower base index to higher base index.
 
   For a gene like `Th`, the BED line for the entire transcript is:
 
-  ```bed
+```bed
 NC_086019.1	207500958	207509276	Th	.	-
-  ```
+```
 
   Transcription start (the first base of the transcript, "+1 == TSS") is at 207509275 (because it is on the - strand, so it runs from higher index to lower index, but because range is non-incluse it starts at chromEnd-1).
 
@@ -97,8 +97,8 @@ NC_086019.1	207500958	207509276	Th	.	-
 
   So for `Npy`, with transcription start base = 80212110, the `GRCr8_TSS_1kb.bed` entry will be.
 
-  ```bed
+```bed
 NC_086022.1	80211110	80213111	Npy	.	+
-  ```
+```
 
 * By default, if a TSS is too close to the ends of a chromosome (e.g., with 1 kb of either 0 or chromosome size), then the TSS is dropped from the TSS BED file and the +/- 1kb BED file.  If the `--no-drop` flag is set, then all TSS are retained, and  `bedtools slop`  generates an entry for the TSS but truncates the flanking region. So a gene with TSS at 500, with +/- 1kb from -500 to 1501, will be truncated to 0 to 1501. 

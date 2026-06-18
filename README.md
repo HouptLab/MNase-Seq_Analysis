@@ -188,6 +188,12 @@ samtools view -h input.bam | head -10     # include header lines (@HD, @SQ, etc.
 samtools head input.bam                    # header only
 ```
 
+to copy to pauper:
+
+```
+rsync -avP -c  houpt@bio-k2067c-mac.bio.fsu.edu:/Users/houpt/Programming_Github/MNase-Seq_Analysis/sequences/Thomas_Houpt_05-29-2026_Houpt_SN_Medulla/Houpt_SN_Medulla/aligned/ ./aligned 2>&1 | grep -i -E 'error|denied|failed|permission'
+```
+
 ## Remove duplicates 
 
 (samtools flagstat reports no duplicates? so do we need to do this step)

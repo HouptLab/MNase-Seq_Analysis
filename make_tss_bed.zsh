@@ -114,25 +114,25 @@ TMP_FILES+=("$tmp")
 # -F'\t'
 
 "${reader[@]}" "$GTF" \
-  | awk  -v feature="$FEATURE" 'BEGIN { OFS = "\t" } 
-         $3 == feature {
+  | awk -F'\t' -v feature="$FEATURE" 'BEGIN { OFS = "\t" } 
+         ($3 == feature) {
              if ($7 == "+") { s = $4 - 1; e = $4 }
              else           { s = $5 - 1; e = $5 }
              id = "."
-             if (feature == "gene") {
+             if (feature == "gene" && $9 ~ /gene_biotype "protein_coding";/) {
                  if (match($0, /gene_id "[^"]+"/)) {
                      id = substr($0, RSTART, RLENGTH)
                      sub(/^gene_id "/, "", id)
                      sub(/"$/, "", id)
                  }
-             } else {
+             } else if (feature == "transcript" && $9 ~ /transcript_biotype "mRNA"/) {
                  if (match($0, /transcript_id "[^"]+"/)) {
                      id = substr($0, RSTART, RLENGTH)
                      sub(/^transcript_id "/, "", id)
                      sub(/"$/, "", id)
                  }
              }
-             print $1, s, e, id, ".", $7
+             if (id != ".") { print $1, s, e, id, ".", $7 }
          }' \
   | LC_ALL=C sort -k1,1 -k2,2n -u > "$tmp"
 rc=$?                              # PIPE_FAIL: nonzero if any stage failed

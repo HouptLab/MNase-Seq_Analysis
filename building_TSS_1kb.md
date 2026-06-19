@@ -20,6 +20,56 @@ mv datasets usr/local/bin
 mv dataformat usr/local/bin
 ```
 
+## Get list of gene_biotypes and transcript_biotypes
+
+```bash
+grep -v "^#" genomic.gtf | awk -F\t '$3=="gene"' | grep -o 'gene_biotype "[^"]*"' | sort | uniq -c
+```
+yields the list in column 9; only select the "protein_coding" genes
+```
+ 1 gene_biotype "antisense_RNA"
+  10 gene_biotype "C_region"
+10879 gene_biotype "lncRNA"
+ 466 gene_biotype "miRNA"
+  13 gene_biotype "misc_RNA"
+  34 gene_biotype "ncRNA"
+23154 gene_biotype "protein_coding"
+8687 gene_biotype "pseudogene"
+   1 gene_biotype "RNase_MRP_RNA"
+ 159 gene_biotype "rRNA"
+1564 gene_biotype "snoRNA"
+1013 gene_biotype "snRNA"
+   1 gene_biotype "SRP_RNA"
+   1 gene_biotype "telomerase_RNA"
+ 117 gene_biotype "transcribed_pseudogene"
+ 771 gene_biotype "tRNA"
+ 491 gene_biotype "V_segment"
+```
+ 
+```bash
+grep -v "^#" genomic.gtf | awk -F\t '$3=="transcript"' | grep -o 'transcript_biotype "[^"]*"' | sort | uniq -c
+```
+
+yields the list in column 9; not how we want to define "all transcripts"; maybe "mRNA"?
+```
+1 transcript_biotype "antisense_RNA"
+  10 transcript_biotype "C_gene_segment"
+21024 transcript_biotype "lnc_RNA"
+ 796 transcript_biotype "miRNA"
+85576 transcript_biotype "mRNA"
+  34 transcript_biotype "ncRNA"
+ 466 transcript_biotype "primary_transcript"
+   1 transcript_biotype "RNase_MRP_RNA"
+ 159 transcript_biotype "rRNA"
+1564 transcript_biotype "snoRNA"
+1013 transcript_biotype "snRNA"
+   1 transcript_biotype "SRP_RNA"
+   1 transcript_biotype "telomerase_RNA"
+4885 transcript_biotype "transcript"
+ 771 transcript_biotype "tRNA"
+ 491 transcript_biotype "V_gene_segment"
+ ```
+ 
 2. install bedtools with homebrew: `brew install bedtools`
 
 3.  download the genome sequence records for Rattus norvegicus RefSeq assembly GCF_036323735.1 (GRCr8) as annotated by the NCBI Eukaryotic Genome Annotation Pipeline; this annotation should be referred to as "GCF_036323735.1-RS_2024_02".
@@ -55,6 +105,8 @@ Run `make_tss_bed.zsh` to derive strand-aware TSS BED from `genomic.gtf`,
 # generates "<output>_TSS.bed" and "<output>_TSS_1kb.bed"
 ```
 
+TODO: script undercounts number of mRNA transcripts? some bug in awk program? by "gene" "protein_coding" is ok.
+
 `make_tss_bed.zsh` takes 4 arguments and one flag:
 
 1. the path to GRCr8 gtf file.
@@ -66,7 +118,7 @@ Run `make_tss_bed.zsh` to derive strand-aware TSS BED from `genomic.gtf`,
 The `make_tss_bed.zsh` script uses `awk` to extract the TSS for each gene from `genomic.gtf`. If the chromosome sizes file is provided, the script then calls `bedtools slop` to produce a bed file with 1kb flanking spans. (Currently, the size of the flank is hardcoded in the script as `FLANK=1000`.)
 
 ```bash
-./make_tss_bed.zsh ncbi/ncbi_dataset/data/GCF_036323735.1/genomic.gtf GRCr8_TSS.bed   ncbi/ncbi_dataset/data/GCF_036323735.1/GRCr8.chrom.sizes
+./make_tss_bed.zsh ncbi/ncbi_dataset/data/GCF_036323735.1/genomic.gtf GRCr8_TSS.bed   GRCr8.chrom.sizes
 ```
 
 THe script produces 2 files: `GRCr8_TSS.bed` with just TSS of each gene (i.e. 1 base wide), and `GRCr8_TSS_1kb.bed`, with span from 1kb upstream to 1kb downstream of TSS. Use `GRCr8_TSS_1kb.bed` with `samtools` to filter aligned BAM reads to just those with the +/- 1kb TSS span.

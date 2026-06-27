@@ -110,7 +110,8 @@ resolve_index() {
 
 # ---- Alignment worker --------------------------------------------------------
 # Run the full bowtie2 -> samtools pipeline for one sample, then index the BAM.
-# bowtie2 streams SAM to stdout; samtools drops unmapped reads, converts to BAM,
+# bowtie2 streams SAM to stdout; samtools view drops unmapped reads, converts to BAM,
+# discard reads with MAPQ scores less than 10
 # and coordinate-sorts to "$bam"; samtools index then writes "$bam.bai".
 #
 # Returns the pipeline's exit status (nonzero if ANY stage failed, thanks to
@@ -122,7 +123,7 @@ align_sample() {
     local rc
 
     bowtie2 --no-discordant --no-mixed -x "$index" -1 "$r1" -2 "$r2" -p "$threads" \
-        | samtools view -@ "$SAMTOOLS_THREADS" -b -F 4 - \
+        | samtools view -@ "$SAMTOOLS_THREADS" -b -q 10 -F 4 - \
         | samtools sort -@ "$SAMTOOLS_THREADS" -T "${bam%.bam}.sorttmp" -o "$bam" -
     rc=$?                              # PIPE_FAIL: nonzero if any stage failed
 

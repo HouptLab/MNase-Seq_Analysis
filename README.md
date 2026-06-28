@@ -1,12 +1,23 @@
 # MNase-Seq Analysis
 
-Based on notes from Dr. Jane Benoit (alum of Dennis lab) with assistance from Claude Opus 4.8.
+Based on notes from Dr. Jane Benoit (alum of Dennis lab) and scripted with assistance from Claude Opus 4.8.
+
+Documentation of workflow for TSS analysis of MNase-seq data, with the goal of mapping changes in nucleosome occupancy and sensitivity in the rat genome, e.g. in the adrenal medulla after stress induction.
+
+This repository organizes and codifies the set-up and processing steps, with a series of shell scripts containing the command line tools and logging results. Ultimately we will have a makefile to specify the build and automate the data pipeline from raw sequencing files to heatmaps and gene ontology mapping. To ensure reproducibility, tool versions (and RNG seeds) are recorded.
+
+---
 
 * TODO: add citations for all programs used
 * TODO: add links to manuals/websites for all programs used
 * TODO: add a flowchart of dataflow with data files, transforms, and tools used to transforms
 * TODO: make sure each step has a functional description
 
+---
+
+Contents of README:
+
+- [Overview of workflow](#overview-of-workflow)
 - [Set up](#set-up)
 - [Download sequence files from RCC](#download-sequence-files-from-RCC)
 - [Check quality with fastqc](#check-quality-with-fastqc)
@@ -19,6 +30,8 @@ Based on notes from Dr. Jane Benoit (alum of Dennis lab) with assistance from Cl
 - [Call nucleosome positions](#call-nucleosome-positions)
 
 ---
+
+## Overview of workflow
 
 ## Set up
 
@@ -75,7 +88,7 @@ To align reads with the rat reference genome, and to limit analysis to transcrip
 
 - `bowtie2` indexes for GRCr8
 
-    download indexes from https://benlangmead.github.io/aws-indexes/bowtie (bowtie2 maintainer site), put into `sequences/bowtie2_indexes/GRCr8/`
+    download indexes from [bowtie2 maintainer site]( https://benlangmead.github.io/aws-indexes/bowtie), put into `sequences/bowtie2_indexes/GRCr8/`
 
     ```bash
     curl -L -o sequences/bowtie2_indexes/GRCr8.zip \
@@ -173,16 +186,16 @@ Download jar from [Trimmomatic releases](https://github.com/usadellab/Trimmomati
 Query: which are appropriate adapters? NEBNext_PE from the library kit?
 
 `./trim_pe.zsh` script runs Trimmomatic with `-phred33` and
- `ILLUMINACLIP:${ADAPTERS}:2:30:10:1:TRUE MINLEN:25 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15`, where adapters are hardcoded in the script as` TruSeq3-PE.fa`. THe adapter files are in ```Trimmomatic-0.40/adapters```, and Trimmomatic looks there automatically.
+ `ILLUMINACLIP:${ADAPTERS}:2:30:10:1:TRUE MINLEN:25 LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15`. The adapters are hardcoded in the script as` TruSeq3-PE.fa`. The adapter files are in ```Trimmomatic-0.40/adapters```, and Trimmomatic looks there automatically.
 
 ```bash
 ./trim_pe.zsh ./sequences/Thomas_Houpt_05-29-2026_Houpt_SN_Medulla/Houpt_SN_Medulla
 ```
 
 
-You can monitor progress with ```tail -f trimming.log```.
+You can monitor progress with `tail -f trimming.log`.
 
-**put the original sequencing files in ```/raw```, and the paired/unpaired files in ```/trimmed```
+*put the original sequencing files in `/raw`, and the paired/unpaired files in `/trimmed`*
 
 
 ---
@@ -193,7 +206,6 @@ You can monitor progress with ```tail -f trimming.log```.
 
 ```bash
 ./do_fastqc.sh ./sequences/Thomas_Houpt_05-29-2026_Houpt_SN_Medulla/Houpt_SN_Medulla/trimmed ./fastqc_trimmed
-
 ```
 
 
@@ -212,7 +224,7 @@ We align to current (2024) reference genome assembly GRCr8 for rat
 
 install `brew install bowtie2`
 
-- need to get bowtie2 indices for rat genome (GRCr8 for rat)
+- need to get `bowtie2` indices for rat genome (GRCr8 for rat)
 
 download indexes from https://benlangmead.github.io/aws-indexes/bowtie (bowtie2 maintainer site), put into sequences/bowtie2_indexes/GRCr8/
 
@@ -225,12 +237,12 @@ curl -L -o sequences/bowtie2_indexes/GRCr8.zip https://genome-idx.s3.amazonaws.c
 and place in `./bowtie2_indexes/GRCr8`
 
 
-run `bowtie2` and pipe through `samtools` to get BAM files:
+The script `run_bowtie2.zsh` runs `bowtie2` and pipes SAM output through `samtools` to get BAM files:
 
 ```bash
 nohup ./run_bowtie2.zsh <source_directory> <destination_directory> &
 ```
-Note that because the alignment can take dozens of hours, we use of `nohup` and `&` to run in the background (`&`) even if we hangup by closing terminal (`nohup`).
+Note that because the alignment can take dozens of hours, we use `nohup` and `&` to run in the background (`&`)  and continue running even if we hangup by closing terminal (`nohup`).
 
 e.g.
 
@@ -240,10 +252,11 @@ nohup ./run_bowtie2.zsh ./sequences/Thomas_Houpt_05-29-2026_Houpt_SN_Medulla/Hou
 
 Outputs BAM files to the destination directory. Logs to `bowtie.log` (and  `bowtie2` itself logs a per-sample bowtie2.log). 
 
-* specifies non-discordant and no-mixed
-* -x: Specifies the index (use the prefix). -- currently hardcoded to "$SCRIPT_DIR/bowtie2_indexes/GRCr8"
+The `bowtie2` invocation specifies:
+* non-discordant and no-mixed
+* -x to specify the index (use the prefix). Index location currently hardcoded to "$SCRIPT_DIR/bowtie2_indexes/GRCr8"
 * -1, -2: Your forward and reverse read files (can be gzipped).
-* -p 8: Uses 8 threads for faster alignment (adjust as needed). 
+* -p : Uses number of cores for threads for faster alignment, or adjust as needed with THREADS env variable. 
 
 The `bowtie2` alignment results are piped to `samtools` to directly produce sorted BAM files, with reads with quality less than 10 dropped (`-q 10`). For each generated BAM file, `samtools index` is  called to generate bam.bai index files, and `samtools flagstat` is called to provide summary statistics.
 
@@ -270,7 +283,7 @@ rsync -avP -c  houpt@bio-k2067c-mac.bio.fsu.edu:/Users/houpt/Programming_Github/
 Use [`samtools markdup`] (https://www.htslib.org/doc/samtools-markdup.html) to remove identical  duplicate reads (PCR artifacts?)
 
 ```bash
-./markdup_dedup.zsh [INPUT_DIR] [OUTPUT_DIR]
+./markdup_dedup.zsh /path/to/bams /path/to/dedup
 ```
 
 Defaults: INPUT_DIR=current dir, OUTPUT_DIR=./dedup. A log file is written at `markdup_$(date +%Y%m%d_%H%M%S).log`
@@ -295,14 +308,14 @@ samtools markdup -r -s Sorted.bam Final_File.bam
 
 ## Downsample BAM files
 
-Normalize number of paired reads in all BAM files to the number of paired reads in the smallest BAM file, using Picard
+Normalize number of paired reads in all BAM files to the number of paired reads in the smallest BAM file, using Picard:
 
 ```bash
-./downsample_bams_picard.zsh [INPUT_DIR] [OUTPUT_DIR]
+./downsample_bams_picard.zsh /path/to/bams /path/to/downsampled
 
 # or reset some script values
 PICARD_JAR=/path/picard.jar SEED=42 STRATEGY=HighAccuracy \
-      ./downsample_bams_picard.zsh /path/to/bams /path/to/output
+      ./downsample_bams_picard.zsh /path/to/bams /path/to/downsampled
 ```
 
 Defaults:
@@ -313,7 +326,7 @@ Defaults:
 - ACCURACY   = 0.0001
 - PICARD_JAR = /Applications/picard.jar
 
-The script counts the number of paired reads in each BAM file using samtools
+The script counts the number of paired reads in each BAM file using `samtools`:
 
 ```bash
 samtools view -c -f 0x40 -F 0x90C -@ "$THREADS" "$bam"
@@ -321,7 +334,7 @@ samtools view -c -f 0x40 -F 0x90C -@ "$THREADS" "$bam"
 
 This uses `-f 0x40 -F 0x90C` to count templates (first-in-pair, primary, both mates mapped) rather than reads, so the denominator matches what Picard samples. Picard's `PROBABILITY` is a per-template keep probability — its docs state the goal is retaining reads from `PROBABILITY` × (input templates), so P = `target_min / this_file's_template_count`.
 
-For the Picard invocation, `STRATEGY=HighAccuracy` is the default because the Picard docs recommend it for smaller inputs: ConstantMemory should be accurate 99.9% of the time when the input contains ≥ 50,000 templates; for smaller inputs HighAccuracy is recommended instead. Override with `STRATEGY=ConstantMemory` if your libraries are large and memory is a concern. `RANDOM_SEED` is set for reproducibility. 
+For the Picard invocation, `STRATEGY=HighAccuracy` is the default because the Picard docs recommend it for smaller inputs: `ConstantMemory` should be accurate 99.9% of the time when the input contains ≥ 50,000 templates; for smaller inputs `HighAccuracy` is recommended instead. Override with `STRATEGY=ConstantMemory` if your libraries are large and memory is a concern. `RANDOM_SEED` is set for reproducibility. 
 
 A final pass with `samtools index` creates `downsampled.bam.bai` index files.
 

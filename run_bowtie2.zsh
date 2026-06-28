@@ -48,7 +48,14 @@ fi
 SCRIPT_DIR=${0:A:h}
 
 INDEX="$SCRIPT_DIR/bowtie2_indexes/GRCr8"
-THREADS=8
+
+# ---------------------------------------------------------------------------
+# Threads from core count (Apple silicon, macOS)
+#    sysctl -n hw.ncpu reports logical cores on macOS
+# ---------------------------------------------------------------------------
+CORES=$(sysctl -n hw.ncpu)
+THREADS="${THREADS:-$CORES}"
+
 SAMTOOLS_THREADS=4   # extra threads for samtools view/sort (bursty; mostly used during sort)
 MAX_JOBS=4           # max alignment jobs to run concurrently (MAX_JOBS * THREADS <= cores)
 PATTERN="*_R1_paired*.fastq.gz"

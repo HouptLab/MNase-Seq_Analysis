@@ -8,3 +8,6 @@ ncbi/
 *.fastq*
 *.zip
 *.gz
+aligned/
+aligned
+shortcut

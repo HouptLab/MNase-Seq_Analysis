@@ -12,6 +12,9 @@ This repository organizes and codifies the set-up and processing steps, with a s
 * TODO: add links to manuals/websites for all programs used
 * TODO: add a flowchart of dataflow with data files, transforms, and tools used to transforms
 * TODO: make sure each step has a functional description
+* TODO: add time estimate for each step
+* TODO: add approximate file sizes for each stem
+* TODO: describe how to get estimated read count from sequencing quality files
 
 ---
 
@@ -33,6 +36,22 @@ Contents of README:
 
 ## Overview of workflow
 
+1. download raw sequencing files -> `/raw/*.fasta.gz`
+2. check quality with `fastqc` -> `/fastqc_raw/`
+3. trim sequencing adapters and barcodes with `Trimmomatic` -> `/trimmed/\*.fasta.gz`
+4. check quality with `fastqc`  -> `/fastqc_trimmed/`
+5. align reads with `bowtie2` -> `/aligned/\*.bam`
+6. remove duplicate reads with `samtools` -> `/nodups/\*.bam`
+7. downsample with `Picard` -> `/downsampled/\*.bam`
+8. merge heavy & light files for total occupancy -> `/downsampled/\*.bam`
+9. check quality with `deepTools`
+10. call nucleosome positions with `DANPOS3`, filtered by TSS -> `/nucleosomes/\*.bw`
+11. get log2ratio of light/heavy with `bigwigCompare` -> `/nucleosomes/\*.bw`
+12. get deepTools matrix file with `computeMatrix` -> `/nucleosomes/\*.matrix.gz`
+13. get clusters, heatmaps and profiles with `plotHeatmap`/`plotProfiles` -> `/results/*.png`
+14. get GO plot with `clusterProfiler` -> `/results/`
+
+
 ## Set up
 
 ### Shell Scripts
@@ -50,7 +69,7 @@ From this repository:
 
 - Trimmomatic 0.40 
   
-    download java jar from [Trimmomatic releases](https://github.com/usadellab/Trimmomatic/releases), place in `/Applications`
+    download java jar from [Trimmomatic releases](https://github.com/usadellab/Trimmomatic/releases), place in `/Applications`; version 0.40 has parallel unzipping.
   
 - fastqc  0.12.1 
 
@@ -86,6 +105,12 @@ From this repository:
 
 To align reads with the rat reference genome, and to limit analysis to transcription start site (TSS) of protein-encoding genes, we need to provide some reference files.
 
+We align to current (2024) reference genome assembly GRCr8 for rat 
+* [paper](https://pmc.ncbi.nlm.nih.gov/articles/PMC11610589/) 
+* [NCBI site](https://www.ncbi.nlm.nih.gov/datasets/genome/GCA_036323735.1/)
+* [assembly report (txt download)](https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/036/323/735/GCF_036323735.1_GRCr8/GCF_036323735.1_GRCr8_assembly_report.txt) -- gives ascension numbers for each chromosome and mitochondrion
+
+
 - `bowtie2` indexes for GRCr8
 
     download indexes from [bowtie2 maintainer site]( https://benlangmead.github.io/aws-indexes/bowtie), put into `sequences/bowtie2_indexes/GRCr8/`
@@ -98,6 +123,21 @@ To align reads with the rat reference genome, and to limit analysis to transcrip
 - GRCr8_TSS_pc_1kb.bed
 
   see `build_TSS_1kb.md` in this repository. The file of 1kb flanking TSS regions of protein-coding genes is made by `make_tss_bed.zsh` from GRCr8 annotation files.
+
+### Directory organization
+
+```
+project
+    ├── aligned # BAM files aligned by bowtie2
+    ├── downsampled # BAM files normalized by Picard
+    ├── fastqc_raw
+    ├── fastqc_trimmed
+    ├── nodup # duplicates removed by samtools
+    ├── nucleosomes # peaks called by DANPOS3 and deepTools matrix
+    ├── raw # sequencing files
+    ├── results  # heatmaps, profiles, clusters, GO output  
+    └── trimmed # fasta.gz files from Trimmomatic
+```
 
 
 ---
@@ -124,6 +164,7 @@ view first 10 lines of a FASTQ sequencing file
 gzcat SN_Medulla_10U_S1_L008_R1_001.fastq.gz | head -n 10
 ```
 
+*put the original sequencing files in `/raw`*
 
 ---
 
@@ -145,9 +186,6 @@ rsync -avc sn23h@pauper.bio.fsu.edu:~/medulla_analysis2/Thomas_Houpt_05-29-2026_
 
 ### Macos
 
-* install ```brew install fastqc```
-* install ```brew install parallel```
-
 Script runs against all fastq.gz files in source directory, uses ```parallel``` for speed up, logs fastqc messages to fastqc_raw.log
 
 ```bash
@@ -156,10 +194,14 @@ Script runs against all fastq.gz files in source directory, uses ```parallel``` 
 
 On MacStudio for 2 samples with R1 and R2 (so 4 fastq files) about 1 hour
 
+*put into /fastqc_raw directory*
 
 ---
 
 ## Trim reads with Trimmomatic
+
+*TODO: a little discussion of what gets trimmed (adapters and barcodes).*
+
 
 https://pmc.ncbi.nlm.nih.gov/articles/PMC4103590/
 http://www.usadellab.org/cms/uploads/supplementary/Trimmomatic/TrimmomaticManual_V0.32.pdf
@@ -178,11 +220,6 @@ You can monitor progress with ```tail -f trimming_B.log```.
 
 ### Macos
 
-
-Download jar from [Trimmomatic releases](https://github.com/usadellab/Trimmomatic/releases): version 0.40 has parallel unzipping.
-
-
-
 Query: which are appropriate adapters? NEBNext_PE from the library kit?
 
 `./trim_pe.zsh` script runs Trimmomatic with `-phred33` and
@@ -195,7 +232,7 @@ Query: which are appropriate adapters? NEBNext_PE from the library kit?
 
 You can monitor progress with `tail -f trimming.log`.
 
-*put the original sequencing files in `/raw`, and the paired/unpaired files in `/trimmed`*
+*put the trimmed paired/unpaired files in `/trimmed`*
 
 
 ---
@@ -208,25 +245,13 @@ You can monitor progress with `tail -f trimming.log`.
 ./do_fastqc.sh ./sequences/Thomas_Houpt_05-29-2026_Houpt_SN_Medulla/Houpt_SN_Medulla/trimmed ./fastqc_trimmed
 ```
 
+*put results in `./fastqc_trimmed` directory*
 
 ---
 
 ## Align reads with bowtie2
 
-[bowtie2](https://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
-
-We align to current (2024) reference genome assembly GRCr8 for rat 
-* [paper](https://pmc.ncbi.nlm.nih.gov/articles/PMC11610589/) 
-* [NCBI site](https://www.ncbi.nlm.nih.gov/datasets/genome/GCA_036323735.1/)
-* [assembly report (txt download)](https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/036/323/735/GCF_036323735.1_GRCr8/GCF_036323735.1_GRCr8_assembly_report.txt) -- gives ascension numbers for each chromosome and mitochondrion
-
 ### Macos
-
-install `brew install bowtie2`
-
-- need to get `bowtie2` indices for rat genome (GRCr8 for rat)
-
-download indexes from https://benlangmead.github.io/aws-indexes/bowtie (bowtie2 maintainer site), put into sequences/bowtie2_indexes/GRCr8/
 
 to copy `bowtie2` indexes to pauper, use curl:
 
@@ -250,7 +275,7 @@ e.g.
 nohup ./run_bowtie2.zsh ./sequences/Thomas_Houpt_05-29-2026_Houpt_SN_Medulla/Houpt_SN_Medulla/trimmed ./sequences/Thomas_Houpt_05-29-2026_Houpt_SN_Medulla/Houpt_SN_Medulla/aligned &
 ```
 
-Outputs BAM files to the destination directory. Logs to `bowtie.log` (and  `bowtie2` itself logs a per-sample bowtie2.log). 
+Outputs BAM files to the destination directory. Logs to `bowtie.log` (and  `bowtie2` itself logs into per-sample `bowtie2.log`s). 
 
 The `bowtie2` invocation specifies:
 * non-discordant and no-mixed
@@ -258,9 +283,7 @@ The `bowtie2` invocation specifies:
 * -1, -2: Your forward and reverse read files (can be gzipped).
 * -p : Uses number of cores for threads for faster alignment, or adjust as needed with THREADS env variable. 
 
-The `bowtie2` alignment results are piped to `samtools` to directly produce sorted BAM files, with reads with quality less than 10 dropped (`-q 10`). For each generated BAM file, `samtools index` is  called to generate bam.bai index files, and `samtools flagstat` is called to provide summary statistics.
-
-*Note: not sure if BAM files need to be indexed at this point. Which downstream tools need bam.bai files?*
+The `bowtie2` alignment results are piped to `samtools` to directly produce sorted BAM files, with reads with quality less than 10 dropped (`-q 10`). For each generated BAM file, `samtools index` is  called to generate bam.bai index files, and `samtools flagstat` is called to provide summary statistics. Downstream tools will use the bam.bai index files to speed up random-access into the BAM files during processing.
 
 To view BAM file contents:
 
@@ -279,6 +302,8 @@ rsync -avP -c  houpt@bio-k2067c-mac.bio.fsu.edu:/Users/houpt/Programming_Github/
 ---
 
 ## Remove duplicate reads
+
+*TODO: a little discussion of what duplicate reads are and how they are identified.*
 
 Use [`samtools markdup`] (https://www.htslib.org/doc/samtools-markdup.html) to remove identical  duplicate reads (PCR artifacts?)
 
@@ -307,6 +332,9 @@ samtools markdup -r -s Sorted.bam Final_File.bam
 ---
 
 ## Downsample BAM files
+
+*TODO: a little discussion of why we downsample.*
+
 
 Normalize number of paired reads in all BAM files to the number of paired reads in the smallest BAM file, using Picard:
 
@@ -340,6 +368,30 @@ A final pass with `samtools index` creates `downsampled.bam.bai` index files.
 
 *Note: can't confirm Picard's memory needs for particular BAM sizes under `HighAccuracy`; if you hit Java heap errors, add `-Xmx` (e.g. `java -Xmx8g -jar` ...) so we can debug.*
 
+
+---
+
+
 ## Run QC with deepTools
 
+
+---
+
+
 ## Call Nucleosome Positions
+
+*TODO: include some suggestions on how to characterize the position data, e.g. volcano plots, histograms, etc.*
+
+
+---
+
+
+## Clustering, Heatmaps, and Profiles
+
+
+
+---
+
+
+
+## Gene Ontology mapping

@@ -17,6 +17,8 @@
 # are written to <destination_directory> (created if it does not exist). The
 # bowtie2 index path, thread counts, and concurrency cap are configured below.
 
+set -eux
+
 setopt PIPE_FAIL       # a pipeline fails if any stage fails
 setopt NULL_GLOB       # a non-matching glob expands to nothing (no error)
 
@@ -171,14 +173,18 @@ fail=0
 launched=0
 
 # Wait for the oldest running job, record its status, drop it from the queue.
+# don't use "status" as a local variable (so renamed to "sample_status")
+# https://unix.stackexchange.com/questions/407125/why-cant-i-define-a-readonly-variable-named-path-in-zsh/407179#407179
+# to see list of "special" parameters (which shouldn't/can't be re-assigned)
+#  for p in $parameters[(I)*]; do print $p $parameters[$p]; done | grep special | sort
 reap_one() {
     local pid=${running[1]}        # zsh arrays are 1-indexed
     running=(${running[2,-1]})     # remove the first element
     if wait $pid; then
         log "PID $pid (sample '${sample_of[$pid]}') completed successfully."
     else
-        local status=$?
-        log "PID $pid (sample '${sample_of[$pid]}') FAILED with exit status $status."
+        local sample_status=$?
+        log "PID $pid (sample '${sample_of[$pid]}') FAILED with exit status $sample_status."
         (( fail++ ))
     fi
 }

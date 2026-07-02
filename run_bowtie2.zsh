@@ -17,7 +17,7 @@
 # are written to <destination_directory> (created if it does not exist). The
 # bowtie2 index path, thread counts, and concurrency cap are configured below.
 
-set -eux
+set -u
 
 setopt PIPE_FAIL       # a pipeline fails if any stage fails
 setopt NULL_GLOB       # a non-matching glob expands to nothing (no error)

@@ -99,6 +99,9 @@ From this repository:
 
   install as [a bioconda package](https://github.com/boenc28-cmyk/DANPOS)
   
+- clusterProfiler
+
+  https://guangchuangyu.github.io/software/clusterProfiler/
 ---
 
 ### Reference sequence files
@@ -311,6 +314,13 @@ Use [`samtools markdup`] (https://www.htslib.org/doc/samtools-markdup.html) to r
 ./markdup_dedup.zsh /path/to/bams /path/to/dedup
 ```
 
+e.g. 
+
+```bash
+./markdup_dedup.zsh /sequences/Thomas_Houpt_05-29-2026_Houpt_SN_Medulla/Houpt_SN_Medulla/aligned /sequences/Thomas_Houpt_05-29-2026_Houpt_SN_Medulla/Houpt_SN_Medulla/dedup
+```
+
+
 Defaults: INPUT_DIR=current dir, OUTPUT_DIR=./dedup. A log file is written at `markdup_$(date +%Y%m%d_%H%M%S).log`
 
 Override thread count with the THREADS environment variable (or modify script to call `hw.perflevel0.physicalcpu` to get count of performance cores only, if you want to avoid loading efficiency cores ).
@@ -388,7 +398,19 @@ A final pass with `samtools index` creates `downsampled.bam.bai` index files.
 
 ## Clustering, Heatmaps, and Profiles
 
+run `plotHeatmap --kmeans <N> ---outFileSortedRegions my_clustered_regions.bed` to get list of clustered regions. Need to run `bedtools intersect` to get gene names? What does `clusterProfiler` want for input?
 
+### Notes on reproducibility of clustering:
+
+Because plotHeatmap uses scikit-learn's k-means clustering under the hood, the cluster initialization centroids are chosen randomly each time (there is no way to specify a seed for the randomization). If you are running `plotHeatmap --kmeans <N>`, your rows will likely be grouped and ordered slightly differently every single time you execute the command.
+
+To fix clustering, either use hierarchical clustering `--hclust <N>`, which is deterministic, or generate clusters once and reuse it by giving computeMatrix the regions BED file, then re-plot without clustering:
+
+```bash
+plotHeatmap -m matrix.gz -out temporary_heatmap.png --kmeans 4 --outFileSortedRegions my_clustered_regions.bed
+computeMatrix reference-point -S signal.bigWig -R my_clustered_regions.bed -o reproducible_matrix.gz
+plotHeatmap -m reproducible_matrix.gz -out reproducible_heatmap.png
+```
 
 ---
 

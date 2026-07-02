@@ -10,12 +10,19 @@
 #   tail -f <source_directory>/trimming_B.log
 #
 
+# TODO: accept destination directory, then create and move output files to destination directory
+
 set -u  # treat unset variables as an error
 
 # --- configuration -------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Threads from core count (Apple silicon, macOS)
+#    sysctl -n hw.ncpu reports logical cores on macOS
+# ---------------------------------------------------------------------------
+CORES=$(sysctl -n hw.ncpu)
+THREADS="${THREADS:-$CORES}" # or use default of 20?
 TRIMMOMATIC_JAR="/Applications/Trimmomatic-0.40/trimmomatic-0.40.jar"
 ADAPTERS="TruSeq3-PE.fa"        # resolved relative to the source dir
-THREADS=20
 R1_GLOB="*_R1_001.fastq.gz"    # RAW R1 inputs only — excludes _paired_/_unpaired_ outputs
 
 # Resolve a real Java runtime explicitly. A non-interactive / nohup'd shell does

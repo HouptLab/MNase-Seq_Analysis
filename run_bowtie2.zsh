@@ -83,9 +83,20 @@ for tool in bowtie2 samtools; do
     fi
 done
 
+# ---------------------------------------------------------------------------
+# Record bowtie2 and samtools version 
+# ---------------------------------------------------------------------------
+log "=== bowtie2 pipeline START ==="
+log "Host: $(hostname)  |  macOS $(sw_vers -productVersion)  |  arch: $(uname -m)"
+log "Logical cores detected: ${CORES}  |  THREADS set to: ${THREADS}"
+log "Source directory: $SRC_DIR"
+log "Destination directory: $DEST_DIR"
+
 # ---- Tool versions -----------------------------------------------------------
 # Record the aligner/toolkit versions for provenance (first line of each).
+log "bowtie2 path: $(command -v bowtie2)"
 log "bowtie2 version: $(bowtie2 --version 2>&1 | head -n 1)"
+log "samtools path: $(command -v samtools)"
 log "samtools version: $(samtools --version 2>&1 | head -n 1)"
 
 # ---- Index resolution --------------------------------------------------------
@@ -146,9 +157,6 @@ align_sample() {
 }
 
 # ---- Main --------------------------------------------------------------------
-log "=== Run started ==="
-log "Source directory: $SRC_DIR"
-log "Destination directory: $DEST_DIR"
 
 # Resolve the bowtie2 index basename before launching anything.
 INDEX_INPUT=$INDEX

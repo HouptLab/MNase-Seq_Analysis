@@ -54,8 +54,7 @@ log "Logical cores detected: ${CORES}  |  THREADS set to: ${THREADS}"
 log "Input dir:  ${INPUT_DIR}"
 log "Output dir: ${OUTPUT_DIR}"
 log "samtools path: $(command -v samtools)"
-log "samtools version:"
-samtools --version | tee -a "$LOGFILE"
+log "samtools version: $(samtools --version 2>&1 | head -n 1)"
 
 # ---------------------------------------------------------------------------
 # Main loop
